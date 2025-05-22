@@ -1,0 +1,153 @@
+################
+#   Extends:   #
+################
+
+.platform_list:
+  parallel:
+    matrix:
+      - BOARD: "geniatech"
+        CHIP: "tin"
+        ACTION: "build"
+        IMAGE: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:latest"
+      - BOARD: "geniatech"
+        CHIP: "vanadium"
+        ACTION: "build"
+        IMAGE: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:latest"
+      - BOARD: "rpi_pi5"
+        CHIP: "tin"
+        ACTION: "build"
+        IMAGE: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/rpi:v3.0.3"
+      - BOARD: "rpi_pi5"
+        CHIP: "vanadium"
+        ACTION: "build"
+        IMAGE: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/rpi:v3.0.3"
+      - BOARD: "rzg3s"
+        CHIP: "tin"
+        ACTION: "build"
+        IMAGE: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:rzg3s"
+      - BOARD: "rzg3s"
+        CHIP: "vanadium"
+        ACTION: "build"
+        IMAGE: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:rzg3s"
+
+.code_scan_list:
+  parallel:
+    matrix:
+      - BOARD: "geniatech"
+        CHIP: "tin"
+        ACTION: "build"
+
+.blackduck_scan_list:
+  parallel:
+    matrix:
+      - BOARD: "geniatech"
+        CHIP: "tin"
+        SCAN_PATHS: "blackduck_scan/"
+
+###################
+#   References:   #
+###################
+
+.vars:
+  variables:
+    SONAR_SCAN_PATHS: 'build/linux/src'
+    SONAR_EXCLUDES: '**/*.py,**/*.js,**/*.ts,**/*.css,**/*.java,**/*.md'
+    COMMON_SONAR_PARAMS: "-Dsonar.projectKey=${SONAR_PROJECT}
+                          -Dsonar.projectName=${SONAR_PROJECT}
+                          -Dsonar.host.url=${SONAR_HOST_URL}
+                          -Dsonar.login=${SONAR_TOKEN}
+                          -Dsonar.organization=CONN
+                          -Dsonar.scm.provider=git
+                          -Dsonar.scm.exclusions.disabled=true
+                          -Dsonar.qualitygate.wait=true
+                          -Dsonar.qualitygate.timeout=300
+                          -Dsonar.sourceEncoding=UTF-8
+                          -Dsonar.sources=${SCAN_PATHS}
+                          -Dsonar.projectBaseDir=${CI_PROJECT_DIR}
+                          -Dsonar.java.binaries=${CI_PROJECT_DIR}
+                          -Dsonar.exclude=${EXCLUDES}
+                          -Dsonar.verbose=true
+                          -Dsonar.language=c
+                          -Dsonar.inclusions-**/*.c,**/*.h
+                          -Dsonar.cxx.file.suffixes=.c
+                          -Dsonar.cfamily.build-wrapper-output=bw_output_${BOARD}_${CHIP}
+                          "
+    DEVOPS_EMAIL_RECIPIENTS: "anatolii.dubyna.xa@bp.renesas.com
+                              maryan.kindzer.yw@bp.renesas.com
+                              sergiy.petrov.ue@bp.renesas.com
+                              vitalii.misko.eb@bp.renesas.com"
+    DEV_EMAIL_RECIPIENTS: "stas.uhman.ks@renesas.com
+                            lior.yaron.ks@renesas.com
+                            moti.gabay.ks@renesas.com
+                            rina.zelman.rj@renesas.com
+                            aviad.brikman.px@renesas.com
+                            bright.jeong.aj@renesas.com
+                            wy.yang.wr@renesas.com
+                            hryhorii.tur.ks@bp.renesas.com
+                            oleksandr.solovov.jy@bp.renesas.com
+                            matan.cohen.yw@renesas.com
+                            fumio.urabe.eb@renesas.com
+                            mykola.vasylenko.yw@bp.renesas.com
+                            petro.mushenyk.ub@bp.renesas.com
+                            arthur.serhienko.ct@bp.renesas.com
+                            maksym.stupakov.dn@bp.renesas.com
+                            oleksandr.savchenko.dn@bp.renesas.com
+                            vitalii.misko.eb@bp.renesas.com"
+    CONN_EMAIL_RECIPIENTS: "CONN-WiFiSoftwareGroup@lm.renesas.com
+                            CONN-WiFiSoftware-KOR@lm.renesas.com
+                            CONN-WiFiSoftware-NXL@lm.renesas.com
+                            CONN-WiFiSoftwareIL@lm.renesas.com"
+    QA_EMAIL_RECIPIENTS: "ioannis.papanikos.fz@renesas.com
+                          emmanouil.vitsaxakis.px@renesas.com
+                          theodoros.vasiliou.fz@renesas.com
+                          panagiota.bilianou.fz@renesas.com
+                          pinelopi.zisimopoulou.aj@renesas.com
+                          ioanna.thoma.aj@renesas.com
+                          panagiotis.leontopoulos.zy@renesas.com
+                          vassilis.dragoumanos.xm@renesas.com
+                          praveen.kumar.vf@bp.renesas.com
+                          andrii.shcherbyna.ra@bp.renesas.com
+                          olexandr.podlinnov.rb@bp.renesas.com"
+
+    COMMON_BLACKDUCK_OPTIONS: "
+          --blackduck.url=${BLACKDUCK_URL}
+          --blackduck.trust.cert=True
+          --blackduck.api.token=${BLACKDUCK_TOKEN}
+          --detect.blackduck.signature.scanner.user.token=${BLACKDUCK_TOKEN}
+          --detect.api.timeout=5400
+          --detect.blackduck.scan.mode=INTELLIGENT
+          --detect.blackduck.signature.scanner.license.search=True
+          --detect.blackduck.signature.scanner.copyright.search=True
+          --detect.blackduck.signature.scanner.individual.file.matching=ALL
+          --detect.blackduck.signature.scanner.snippet.matching=SNIPPET_MATCHING
+          --detect.cleanup.bdio.files=true
+          --detect.cleanup.blackduck.directory=true
+          --detect.follow.symbolic.links=true
+          --detect.impact.analysis.enabled=true
+          --detect.logging.console.log.enabled=false
+          --detect.project.name=${BLACKDUCK_PROJECT}
+          --detect.project.version.phase=DEVELOPMENT
+          --detect.project.version.update=true
+          --detect.project.version.name=${CI_COMMIT_REF_NAME}_${BOARD}_${CHIP}
+          --detect.policy.check.fail.on.severities=ALL
+          --detect.source.path=${SCAN_PATHS}
+          --detect.tools=ALL
+          --detect.timeout=10800
+          --detect.wait.for.results=false
+          --detect.notices.report=true
+          --detect.notices.report.path=/tmp/reports_${CHIP}_${INTERFACE}
+          --detect.risk.report.pdf=true
+          --detect.risk.report.pdf.path=/tmp/reports_${CHIP}_${INTERFACE}"
+
+.prepeare_email_notification:
+  configure_email_server:
+    - |
+      sudo sh -c 'echo 'root=postmaster' > /etc/ssmtp/ssmtp.conf'
+      sudo sh -c 'echo 'mailhub=smtp.office365.com:587' >> /etc/ssmtp/ssmtp.conf'
+      sudo sh -c "echo AuthUser=$RENESAS_M365_SMTP_USERNAME >> /etc/ssmtp/ssmtp.conf"
+      sudo sh -c "echo AuthPass=$RENESAS_M365_SMTP_PASSWORD >> /etc/ssmtp/ssmtp.conf"
+      sudo sh -c 'echo 'UseTLS=YES' >> /etc/ssmtp/ssmtp.conf'
+      sudo sh -c 'echo 'UseSTARTTLS=YES' >> /etc/ssmtp/ssmtp.conf'
+      sudo sh -c 'echo 'rewriteDomain=dm.renesas.com' >> /etc/ssmtp/ssmtp.conf'
+      sudo sh -c 'echo 'FromLineOverride=YES' >> /etc/ssmtp/ssmtp.conf'
+      sudo sh -c "echo developer:$RENESAS_M365_SMTP_USERNAME:smtp.office365.com > /etc/ssmtp/revaliases"

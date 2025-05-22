@@ -1,0 +1,385 @@
+{
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "Geniatech (sdio, tin, aa, build)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "g",
+                    "geniatech",
+                    "tin",
+                    "sdio",
+                    "aa",
+                    "build"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Geniatech (sdio, vanadium, aa, build)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "g",
+                    "geniatech",
+                    "vanadium",
+                    "sdio",
+                    "aa",
+                    "build"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Geniatech (sdio, tin, aa, debug)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "g",
+                    "geniatech",
+                    "tin",
+                    "sdio",
+                    "aa",
+                    "debug"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Geniatech (sdio, vanadium, aa, debug)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "g",
+                    "geniatech",
+                    "vanadium",
+                    "sdio",
+                    "aa",
+                    "debug"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Geniatech (sdio, tin, ba, build)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "g",
+                    "geniatech",
+                    "tin",
+                    "sdio",
+                    "ba",
+                    "build"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Geniatech (sdio, vanadium, ba, build)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "g",
+                    "geniatech",
+                    "vanadium",
+                    "sdio",
+                    "ba",
+                    "build"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Geniatech (sdio, tin, ba, debug)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "g",
+                    "geniatech",
+                    "tin",
+                    "sdio",
+                    "ba",
+                    "debug"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Geniatech (sdio, vanadium, ba, debug)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "g",
+                    "geniatech",
+                    "vanadium",
+                    "sdio",
+                    "ba",
+                    "debug"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Geniatech (sdio, clean)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "g",
+                    "geniatech",
+                    "tin",
+                    "sdio",
+                    "ba",
+                    "clean"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Raspberry PI5 (sdio, tin, aa, build)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "tin",
+                    "sdio",
+                    "aa",
+                    "build"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Raspberry PI5 (sdio, vanadium, aa, build)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "vanadium",
+                    "sdio",
+                    "aa",
+                    "build"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Raspberry PI5 (sdio, tin, aa, debug)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "tin",
+                    "sdio",
+                    "aa",
+                    "debug"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Raspberry PI5 (sdio, vanadium, aa, debug)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "vanadium",
+                    "sdio",
+                    "aa",
+                    "debug"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Raspberry PI5 (sdio, tin, ba, build)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "tin",
+                    "sdio",
+                    "ba",
+                    "build"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Raspberry PI5 (spi, tin, ba, build)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "tin",
+                    "spi",
+                    "ba",
+                    "build"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Raspberry PI5 (sdio, vanadium, ba, build)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "vanadium",
+                    "sdio",
+                    "ba",
+                    "build"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Raspberry PI5 (sdio, tin, ba, debug)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "tin",
+                    "sdio",
+                    "ba",
+                    "debug"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Raspberry PI5 (spi, tin, ba, debug)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "tin",
+                    "spi",
+                    "ba",
+                    "debug"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },        
+            {
+                "label": "Raspberry PI5 (sdio, vanadium, ba, debug)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "vanadium",
+                    "sdio",
+                    "ba",
+                    "debug"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+            {
+                "label": "Raspberry PI5 (sdio, clean)",
+                "type": "shell",
+                "command": "bash",
+                "args": [
+                    "./run_docker.sh",
+                    "r",
+                    "rpi_pi5",
+                    "tin",
+                    "sdio",
+                    "ba",
+                    "clean"
+                ],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            },
+        ]
+    }

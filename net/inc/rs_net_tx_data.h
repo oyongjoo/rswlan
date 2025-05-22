@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+/**
+ * Copyright (C) [2022-2025] Renesas Electronics Corporation and/or its
+ * affiliates.
+ */
+
+#ifndef RS_NET_TX_DATA_H
+#define RS_NET_TX_DATA_H
+
+////////////////////////////////////////////////////////////////////////////////
+/// INCLUDE
+
+#include "rs_type.h"
+
+////////////////////////////////////////////////////////////////////////////////
+/// MACRO DEFINITION
+
+////////////////////////////////////////////////////////////////////////////////
+/// TYPE DEFINITION
+
+////////////////////////////////////////////////////////////////////////////////
+/// GLOBAL VARIABLE
+
+////////////////////////////////////////////////////////////////////////////////
+/// GLOBAL FUNCTION
+
+// TX Data handler
+rs_ret rs_net_tx_data(struct rs_c_if *c_if, struct rs_net_vif_priv *vif_priv, u8 *skb);
+
+rs_ret rs_net_tx_mgmt(struct rs_c_if *c_if, struct rs_net_vif_priv *vif_priv, struct rs_net_sta_priv *sta,
+		      void *params, bool offchan, u64 *cookie);
+
+#endif /* RS_NET_TX_DATA_H */

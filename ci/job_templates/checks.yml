@@ -1,0 +1,171 @@
+.mr_message_check:
+  timeout: 2 minutes
+  allow_failure: true
+  stage: .pre
+  image:
+    name: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:latest"
+    pull_policy: if-not-present
+    docker:
+      user: developer
+  variables:
+    GIT_STRATEGY: none
+    GIT_SUBMODULE_STRATEGY: none
+  before_script:
+    - sudo apt update -qq
+    - sudo apt -y -qq install curl jq
+    - BOLD='\e[1m'
+    - RED='\e[31m'
+    - GREEN='\e[32m'
+    - YELLOW='\e[33m'
+    - RESET='\e[0m'
+  script:
+    - |
+      exit_code=0
+      MR_DESCRIPTION=$(curl -L --silent --header "PRIVATE-TOKEN: ${RSWLAN_TOKEN}" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}" | jq -r '.description')
+
+      if [[ -z "$MR_DESCRIPTION" ]]; then
+        echo -e "${BOLD}${RED}[WARNING] ${YELLOW}Merge Request desription is empty ${RESET}"
+        MR_CHECK_COMMENT="[WARNING] Merge Request description is empty <br />"
+      fi
+
+      if ! grep -qE '(^.|^)\[[A-Z]+-[0-9]+\]:(|.)+' <<< "${MR_DESCRIPTION}"; then
+        echo -e "${BOLD}${RED}[WARNING] ${YELLOW}Merge Request desription must start with '[JIRA-XXXXX]: Task name from Jira' ${RESET}"
+        MR_CHECK_COMMENT="${MR_CHECK_COMMENT}[WARNING] Merge Request description must start with '[JIRA-XXXXX]: Task name from Jira' <br />"
+        exit_code=1
+      fi
+
+      if ! grep -qE '[tT]ested on platform(s|):(|.)+' <<< "${MR_DESCRIPTION}"; then
+        echo -e "${BOLD}${RED}[WARNING] ${YELLOW}Merge Request desription must include 'Tested on platforms: <description>' ${RESET}"
+        MR_CHECK_COMMENT="${MR_CHECK_COMMENT}[WARNING] Merge Request description must include 'Tested on platforms: <description>' <br />"
+        exit_code=1
+      fi
+
+        if ! grep -qE '([tT]est ([sS]tep|[rR]esult)|[tT]est)(s|):(|.)+' <<< "${MR_DESCRIPTION}"; then
+          echo -e "${BOLD}${RED}[WARNING] ${YELLOW}Merge Request desription must include 'Test Steps:' followed by steps ${RESET}"
+          MR_CHECK_COMMENT="${MR_CHECK_COMMENT}[WARNING] Merge Request description must include 'Test Steps:' or 'Tests:' with followed description <br />"
+          exit_code=1
+        fi
+
+      if [[ $exit_code -ne 0 ]]; then
+        echo -e "${BOLD}${RED}[FAIL] ${YELLOW}Merge Request description check failed:${RESET} \n$MR_CHECK_COMMENT"
+        # Sent a comment to the Merge Request in Gitlab over API
+        # curl -L --silent --request POST --header "PRIVATE-TOKEN: ${RSWLAN_TOKEN}" \
+        #   --data "body=$MR_CHECK_COMMENT" \
+        #   "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes"
+        exit $exit_code
+      else
+        echo -e "${BOLD}${GREEN}[PASS]${RESET} Merge Request desription is correct: ${GREEN}PASSED${RESET}"
+      fi
+
+.sonar_code_check:
+  timeout: 60 minutes
+  image:
+    name: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:sonar"
+    pull_policy: if-not-present
+    docker:
+      user: developer
+  allow_failure: true
+  stage: test
+  dependencies:
+    - Build
+  variables:
+    GIT_STRATEGY: clone
+    GIT_SUBMODULE_STRATEGY: none
+    SCAN_PATHS: !reference [.vars, variables, SONAR_SCAN_PATHS]
+    EXCLUDES: !reference [.vars, variables, SONAR_EXCLUDES]
+    COMMON_SONAR_PARAMS: !reference [.vars, variables, COMMON_SONAR_PARAMS]
+    INTERFACES: "sdio"
+  script:
+    - echo "Build and Sonar scan - ${BOARD}_${CHIP}"
+    - bash -c "echo '10.12.43.212 sonarqube.global.renesas.com' >> ${CI_PROJECT_DIR}/.hosts"
+    - export HOSTALIASES=${CI_PROJECT_DIR}/.hosts
+    - build-wrapper-linux-x86-64 --out-dir bw_output_${BOARD}_${CHIP} ./linux_build.sh --action ${ACTION} --board ${BOARD} --chip ${CHIP} --interface ${INTERFACE} --revision ${REVISION}
+    - zip -r bw_output_${BOARD}_${CHIP}.zip bw_output_${BOARD}_${CHIP}
+    - sonar-scanner ${COMMON_SONAR_PARAMS} -Dsonar.branch.name=${CI_COMMIT_REF_NAME} > sonar_scan_${BOARD}_${CHIP}.log
+  artifacts:
+    paths:
+      - ${BUILD_DIR}/sonar_scan_${BOARD}_${CHIP}.log
+      - ${BUILD_DIR}/bw_output_${BOARD}_${CHIP}.zip
+
+.blackduck:
+  image:
+    name: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:sonar"
+    pull_policy: if-not-present
+    docker:
+      user: developer
+  allow_failure: true
+  timeout: 150 minutes
+  stage: test
+  variables:
+    GIT_STRATEGY: clone
+    COMMON_BLACKDUCK_OPTIONS: !reference [.vars, variables, COMMON_BLACKDUCK_OPTIONS]
+  before_script:
+    - sudo apt update -qq
+    - sudo apt -y -qq install curl
+  script:
+    - mkdir -p blackduck_scan
+    - cp -r kal/ blackduck_scan/
+    - cp -r net/ blackduck_scan/
+    - cp -r core/ blackduck_scan/
+    - bash <(curl -s -L https://detect.synopsys.com/detect9.sh) ${COMMON_BLACKDUCK_OPTIONS}
+  after_script:
+    - rm -rf /tmp/reports*
+    - rm -rf blackduck_scan
+  artifacts:
+    paths:
+      - /tmp/reports_${BOARD}_${CHIP}
+
+.scan_report_notification:
+  timeout: 2 minutes
+  image:
+    name: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:latest"
+    pull_policy: if-not-present
+    docker:
+      user: developer
+  stage: .post
+  variables:
+    GIT_STRATEGY: clone
+    GIT_SUBMODULE_STRATEGY: none
+    DEVOPS_EMAIL_RECIPIENTS: !reference [.vars, variables, DEVOPS_EMAIL_RECIPIENTS]
+    DEV_EMAIL_RECIPIENTS: !reference [.vars, variables, DEV_EMAIL_RECIPIENTS]
+    QA_EMAIL_RECIPIENTS: !reference [.vars, variables, QA_EMAIL_RECIPIENTS]
+  before_script:
+    - sudo apt update -qq
+    - sudo apt -y -qq install ssmtp mailutils gettext-base git curl jq
+    - !reference [.prepeare_email_notification, configure_email_server]
+  script:
+    - |
+      export DATE=$(date +%Y-%m-%d)
+      SCAN_RESULTS_EMAIL_RECIPIENTS="${DEVOPS_EMAIL_RECIPIENTS} ${DEV_EMAIL_RECIPIENTS} ${QA_EMAIL_RECIPIENTS}"
+
+      get_job_id() {
+        pattern=$1
+        echo $(curl -L --silent --header "PRIVATE-TOKEN: ${RSWLAN_TOKEN}" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/pipelines/${CI_PIPELINE_ID}/jobs" | \
+          jq -c ".[] | select(.name | contains(\"$pattern\")).id" )
+      }
+
+      get_report_url() {
+        pattern=$1
+        job_id=$2
+        echo $(curl -L --silent --header "PRIVATE-TOKEN: ${RSWLAN_TOKEN}" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/${job_id}/trace" | \
+          grep -oE "${pattern}" | grep -oE "https://.+" || echo "${CI_PIPELINE_URL}")
+      }
+
+      SONAR_JOB_ID=$(get_job_id "Sonar: [${BOARD}")
+      echo "Sonar job id: ${SONAR_JOB_ID}"
+
+      BLACKDUCK_JOB_ID=$(get_job_id "BlackDuck: [${BOARD}")
+      echo "Blackduck job id: ${BLACKDUCK_JOB_ID}"
+
+      export SONAR_SCAN_REPORT_URL=$(get_report_url "QUALITY GATE STATUS:.+" $SONAR_JOB_ID)
+      echo "Sonar scan report URL: ${SONAR_SCAN_REPORT_URL}"
+
+      export BLACKDUCK_SCAN_REPORT_URL=$(get_report_url "Black Duck Project BOM:.+" $BLACKDUCK_JOB_ID)
+      echo "Blackduck scan report URL: ${BLACKDUCK_SCAN_REPORT_URL}"
+
+      echo "Sending release e-mail to: ${SCAN_RESULTS_EMAIL_RECIPIENTS}"
+      set -x
+      python3 ci/tools/send_email.py --type "scheduled" --recipients "$SCAN_RESULTS_EMAIL_RECIPIENTS"

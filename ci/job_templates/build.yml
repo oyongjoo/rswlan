@@ -1,0 +1,36 @@
+.build_job:
+  timeout: 20 minutes
+  stage: build
+  image:
+    name: ${IMAGE}
+    pull_policy: if-not-present
+    docker:
+      user: developer
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_DEPTH: 2
+    GIT_CLEAN_FLAGS: "-ffdx"
+    FF_ENABLE_JOB_CLEANUP: "true"
+    INTERFACE: "sdio"
+    REVISIONS: "ba"
+  before_script:
+    - echo "Build start ${BOARD} ${CHIP}"
+    - sudo chown -R 1000 .
+  script:
+    - |
+      set -e
+      for REVISION in ${REVISIONS}; do
+        echo "[CLEAN] - start ${BOARD} ${CHIP} ${INTERFACE} ${REVISION}"
+        ./linux_build.sh --action clean --board ${BOARD} --chip ${CHIP} --interface ${INTERFACE} --revision ${REVISION}
+        echo "[COMPILATION] - start ${BOARD} ${CHIP} ${INTERFACE} ${REVISION}"
+        ./linux_build.sh --action ${ACTION} --board ${BOARD} --chip ${CHIP} --interface ${INTERFACE} --revision ${REVISION}
+        echo "[COMPILATION] - end ${BOARD} ${CHIP} ${INTERFACE} ${REVISION}"
+        mkdir -p ${BOARD}_${CHIP}_${INTERFACE}_artifacts/${REVISION}
+        cp build/linux/bin/rswlan.ko ${BOARD}_${CHIP}_${INTERFACE}_artifacts/${REVISION}/rswlan.ko
+      done
+      echo "[ARTIFACTS] - done ${BOARD} ${CHIP} ${INTERFACE} ${REVISION}"
+      ls -Rla ${BOARD}_${CHIP}_${INTERFACE}_artifacts/
+  artifacts:
+    name: "${BOARD}_${CHIP}_${INTERFACE}_artifacts"
+    paths:
+      - ${BOARD}_${CHIP}_${INTERFACE}_artifacts/**

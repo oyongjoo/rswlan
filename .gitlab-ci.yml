@@ -1,0 +1,84 @@
+stages:
+  - build
+  - test
+  - deploy
+
+include:
+  - ci/job_templates/build.yml
+  - ci/job_templates/params.yml
+  - ci/job_templates/deploy.yml
+  - ci/job_templates/checks.yml
+
+Commit_mesage_check:
+  extends:
+    - .mr_message_check
+  tags:
+    - ${BUILD_SERVER_TAG}
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+Build:
+  extends:
+    - .build_job
+    - .platform_list
+  tags:
+    - ${BUILD_SERVER_TAG}
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_TAG =~ /^v[67]\.[01]\.[1-9]\.[0-9]{0,2}\.[0-9]{0,3}(_.*|)$/
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE == "NIGHTLY"
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG == null
+    #- if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == null
+
+Release_build:
+  extends:
+    - .deploy_job
+  tags:
+    - ${BUILD_SERVER_TAG}
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[67]\.[01]\.[1-9]\.[0-9]{0,2}\.[0-9]{0,3}(_.*|)$/
+
+Per-commit_Deploy:
+  extends:
+    - .deploy_job
+  tags:
+    - ${BUILD_SERVER_TAG}
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG == null
+    #- if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == null
+
+Nightly_Deploy:
+  extends:
+    - .deploy_job
+  tags:
+    - ${BUILD_SERVER_TAG}
+  rules:
+    - if: $SCHEDULE == "NIGHTLY" && $CI_PIPELINE_SOURCE == "schedule"
+
+Sonar:
+  extends:
+    - .code_scan_list
+    - .sonar_code_check
+  tags:
+    - ${BUILD_SERVER_TAG}
+  rules:
+    - if: $SCHEDULE == "NIGHTLY" && $CI_PIPELINE_SOURCE == "schedule"
+
+BlackDuck:
+  extends:
+    - .blackduck_scan_list
+    - .blackduck
+  tags:
+    - ${BUILD_SERVER_TAG}
+  rules:
+    - if: $SCHEDULE == "NIGHTLY" && $CI_PIPELINE_SOURCE == "schedule"
+
+Notification:
+  extends:
+    - .scan_report_notification
+  tags:
+    - ${BUILD_SERVER_TAG}
+  rules:
+    - if: $SCHEDULE == "NIGHTLY" && $CI_PIPELINE_SOURCE == "schedule"
+

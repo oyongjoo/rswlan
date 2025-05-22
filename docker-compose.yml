@@ -1,0 +1,257 @@
+services:
+  build:
+    image: ${IMAGE}
+    # user: ${UID}:${GID}
+    volumes:
+      - type: bind
+        source: ./
+        target: ${PWD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo "Build Process Start"
+        set -e
+        cd ${PWD}
+        ./linux_build.sh --action build --board ${BOARD} --chip ${CHIP} --interface ${INTERFACE} --revision ${REVISION}
+        echo "Compilation end"
+
+  debug:
+    image: ${IMAGE}
+    # user: ${UID}:${GID}
+    volumes:
+      - type: bind
+        source: ./
+        target: ${PWD}
+    environment:
+      - BOARD=${BOARD}
+      - CHIP=${CHIP}
+      - INTERFACE=${INTERFACE}
+      - REVISION=${REVISION}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo "Debug Build Process Start"
+        set -e
+        cd "${PWD}"
+        ./linux_build.sh --action debug --board ${BOARD} --chip ${CHIP} --interface ${INTERFACE} --revision ${REVISION}
+        echo "End debug build"
+
+  clean:
+    # image: artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:latest
+    image: ${IMAGE}
+    # user: ${UID}:${GID}
+    volumes:
+      - type: bind
+        source: ./
+        target: ${PWD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo "Clean start"
+        set -e
+        cd ${PWD}
+        ./linux_build.sh --action clean
+        echo "Clean end"
+
+# Board multi-build
+  build_geniatech:
+    # image: artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:latest
+    image: ${IMAGE_GENIATECH}
+    # user: ${UID}:${GID}
+    volumes:
+      - type: bind
+        source: ./
+        target: ${PWD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo "Build Process Start"
+        set -e
+        cd ${PWD}
+        IFS=',' read -ra BOARDS <<< "${BOARD_LIST_GENIATECH}"
+        IFS=',' read -ra CHIPS <<< "${CHIP_LIST}"
+        IFS=',' read -ra INTERFACES <<< "${INTERFACE_LIST}"
+        IFS=',' read -ra REVISIONS <<< "${REVISION_LIST}"
+        for BOARD in "$${BOARDS[@]}"; do
+          for CHIP in "$${CHIPS[@]}"; do
+            for INTERFACE in "$${INTERFACES[@]}"; do
+              for REVISION in "$${REVISIONS[@]}"; do
+                echo "Building with BOARD=i$${BOARD}, CHIP=$${CHIP}, INTERFACE=$${INTERFACE}, REVISION=$${REVISION}"
+                ./linux_build.sh --action build --board "$${BOARD}" --chip "$${CHIP}" --interface "$${INTERFACE}" --revision "$${REVISION}"
+                cp -r build "build_$${BOARD}_$${CHIP}_$${INTERFACE}_$${REVISION}"
+                rm -rf build
+              done
+            done
+          done
+        done
+        echo "Build Process End"
+
+  build_rpi:
+    # image: artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:latest
+    image: ${IMAGE_RPI}
+    # user: "${UID}:${GID}"
+    volumes:
+      - type: bind
+        source: ./
+        target: ${PWD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo "Build Process Start"
+        set -e
+        cd "${PWD}"
+        IFS=',' read -ra BOARDS <<< "${BOARD_LIST_RPI}"
+        IFS=',' read -ra CHIPS <<< "${CHIP_LIST}"
+        IFS=',' read -ra INTERFACES <<< "${INTERFACE_LIST}"
+        IFS=',' read -ra REVISIONS <<< "${REVISION_LIST}"
+        for BOARD in "$${BOARDS[@]}"; do
+          for CHIP in "$${CHIPS[@]}"; do
+            for INTERFACE in "$${INTERFACES[@]}"; do
+              for REVISION in "$${REVISIONS[@]}"; do
+                echo "Building with BOARD=i$${BOARD}, CHIP=$${CHIP}, INTERFACE=$${INTERFACE}, REVISION=$${REVISION}"
+                ./linux_build.sh --action build --board "$${BOARD}" --chip "$${CHIP}" --interface "$${INTERFACE}" --revision "$${REVISION}"
+                cp -r build "build_$${BOARD}_$${CHIP}_$${INTERFACE}_$${REVISION}"
+                rm -rf build
+              done
+            done
+          done
+        done
+        echo "Build Process End"
+
+  build_rzg3s:
+    # image: artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:rzg3s
+    image: ${IMAGE_RZG3S}
+    # user: "${UID}:${GID}"
+    volumes:
+      - type: bind
+        source: ./
+        target: ${PWD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo "Build Process Start"
+        set -e
+        cd "${PWD}"
+        IFS=',' read -ra BOARDS <<< "${BOARD_LIST_RZG3S}"
+        IFS=',' read -ra CHIPS <<< "${CHIP_LIST}"
+        IFS=',' read -ra INTERFACES <<< "${INTERFACE_LIST}"
+        IFS=',' read -ra REVISIONS <<< "${REVISION_LIST}"
+        for BOARD in "$${BOARDS[@]}"; do
+          for CHIP in "$${CHIPS[@]}"; do
+            for INTERFACE in "$${INTERFACES[@]}"; do
+              for REVISION in "$${REVISIONS[@]}"; do
+                echo "Building with BOARD=i$${BOARD}, CHIP=$${CHIP}, INTERFACE=$${INTERFACE}, REVISION=$${REVISION}"
+                ./linux_build.sh --action build --board "$${BOARD}" --chip "$${CHIP}" --interface "$${INTERFACE}" --revision "$${REVISION}"
+                cp -r build "build_$${BOARD}_$${CHIP}_$${INTERFACE}_$${REVISION}"
+                rm -rf build
+              done
+            done
+          done
+        done
+        echo "Build Process End"
+
+  debug_build_geniatech:
+    # image: artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:latest
+    image: ${IMAGE_GENIATECH}
+    # user: "${UID}:${GID}"
+    volumes:
+      - type: bind
+        source: ./
+        target: ${PWD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo "Debug build Process Start"
+        set -e
+        cd "${PWD}"
+        IFS=',' read -ra BOARDS <<< "${BOARD_LIST_GENIATECH}"
+        IFS=',' read -ra CHIPS <<< "${CHIP_LIST}"
+        IFS=',' read -ra INTERFACES <<< "${INTERFACE_LIST}"
+        IFS=',' read -ra REVISIONS <<< "${REVISION_LIST}"
+        for BOARD in "$${BOARDS[@]}"; do
+          for CHIP in "$${CHIPS[@]}"; do
+            for INTERFACE in "$${INTERFACES[@]}"; do
+              for REVISION in "$${REVISIONS[@]}"; do
+                echo "Building with BOARD=i$${BOARD}, CHIP=$${CHIP}, INTERFACE=$${INTERFACE}, REVISION=$${REVISION}"
+                ./linux_build.sh --action build --board "$${BOARD}" --chip "$${CHIP}" --interface "$${INTERFACE}" --revision "$${REVISION}"
+                cp -r build "build_$${BOARD}_$${CHIP}_$${INTERFACE}_$${REVISION}"
+                rm -rf build
+              done
+            done
+          done
+        done
+        echo "End debug build"
+
+  debug_build_rpi:
+    # image: artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:latest
+    image: ${IMAGE_RPI}
+    # user: "${UID}:${GID}"
+    volumes:
+      - type: bind
+        source: ./
+        target: ${PWD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo "Debug build Process Start"
+        set -e
+        cd "${PWD}"
+        IFS=',' read -ra BOARDS <<< "${BOARD_LIST_RPI}"
+        IFS=',' read -ra CHIPS <<< "${CHIP_LIST}"
+        IFS=',' read -ra INTERFACES <<< "${INTERFACE_LIST}"
+        IFS=',' read -ra REVISIONS <<< "${REVISION_LIST}"
+        for BOARD in "$${BOARDS[@]}"; do
+          for CHIP in "$${CHIPS[@]}"; do
+            for INTERFACE in "$${INTERFACES[@]}"; do
+              for REVISION in "$${REVISIONS[@]}"; do
+                echo "Building with BOARD=i$${BOARD}, CHIP=$${CHIP}, INTERFACE=$${INTERFACE}, REVISION=$${REVISION}"
+                ./linux_build.sh --action build --board "$${BOARD}" --chip "$${CHIP}" --interface "$${INTERFACE}" --revision "$${REVISION}"
+                cp -r build "build_$${BOARD}_$${CHIP}_$${INTERFACE}_$${REVISION}"
+                rm -rf build
+              done
+            done
+          done
+        done
+        echo "End debug build"
+
+  debug_build_rzg3s:
+    # image: artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:rzg3s
+    image: ${IMAGE_RZG3S}
+    # user: "${UID}:${GID}"
+    volumes:
+      - type: bind
+        source: ./
+        target: ${PWD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo "Debug build Process Start"
+        set -e
+        cd "${PWD}"
+        IFS=',' read -ra BOARDS <<< "${BOARD_LIST_RZG3S}"
+        IFS=',' read -ra CHIPS <<< "${CHIP_LIST}"
+        IFS=',' read -ra INTERFACES <<< "${INTERFACE_LIST}"
+        IFS=',' read -ra REVISIONS <<< "${REVISION_LIST}"
+        for BOARD in "$${BOARDS[@]}"; do
+          for CHIP in "$${CHIPS[@]}"; do
+            for INTERFACE in "$${INTERFACES[@]}"; do
+              for REVISION in "$${REVISIONS[@]}"; do
+                echo "Building with BOARD=i$${BOARD}, CHIP=$${CHIP}, INTERFACE=$${INTERFACE}, REVISION=$${REVISION}"
+                ./linux_build.sh --action build --board "$${BOARD}" --chip "$${CHIP}" --interface "$${INTERFACE}" --revision "$${REVISION}"
+                cp -r build "build_$${BOARD}_$${CHIP}_$${INTERFACE}_$${REVISION}"
+                rm -rf build
+              done
+            done
+          done
+        done
+        echo "End debug build"
+

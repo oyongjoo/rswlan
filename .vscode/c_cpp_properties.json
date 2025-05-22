@@ -1,0 +1,28 @@
+{
+  "configurations": [
+    {
+      "name": "linux-clang-x64",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "/home/rzg2l-5.10.158/include/config/**",
+        "/home/rzg2l-5.10.158/include/generated/**",
+        "/home/linux-5.10.158/**",
+        "/home/linux-5.10.158/include/**"
+],
+      "defines": [
+        "${default}",
+        "CONFIG_RS_SDIO",
+        "CONFIG_RS_FULLMAC",
+        "__KERNEL__",
+        "LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)",
+        "CONFIG_NL80211_TESTMODE",
+        ""
+      ],
+      "compilerPath": "/usr/bin/clang",
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "linux-clang-x64"
+    }
+  ],
+  "version": 4
+}

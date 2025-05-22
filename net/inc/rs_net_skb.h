@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+/**
+ * Copyright (C) [2022-2025] Renesas Electronics Corporation and/or its
+ * affiliates.
+ */
+
+#ifndef RS_NET_SKB_H
+#define RS_NET_SKB_H
+
+////////////////////////////////////////////////////////////////////////////////
+/// INCLUDE
+
+#include "rs_type.h"
+
+////////////////////////////////////////////////////////////////////////////////
+/// MACRO DEFINITION
+
+////////////////////////////////////////////////////////////////////////////////
+/// TYPE DEFINITION
+
+////////////////////////////////////////////////////////////////////////////////
+/// GLOBAL VARIABLE
+
+////////////////////////////////////////////////////////////////////////////////
+/// GLOBAL FUNCTION
+
+// Allocate sk_buff
+u8 *rs_net_skb_alloc(u32 len);
+
+// Free sk_buff
+void rs_net_skb_free(u8 *skb);
+
+// Get data buffer from sk_buff
+s32 rs_net_skb_get_data(u8 *skb, u8 **out_data);
+
+// Add IF TX Header to skb_data
+u8 *rs_net_skb_add_tx_hdr(u8 *skb, u8 hdr_size);
+
+#endif /* RS_NET_SKB_H */

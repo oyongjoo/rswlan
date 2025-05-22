@@ -1,0 +1,171 @@
+.deploy_job:
+  timeout: 10 minutes
+  stage: deploy
+  image:
+    name: "artifactory.global.renesas.com/shared-conn-docker-registry-local/renesas/tin:latest"
+    pull_policy: if-not-present
+    docker:
+      user: developer
+  variables:
+    GIT_STRATEGY: fetch
+    GIT_CLEAN_FLAGS: "-ffdx"
+    BUILD_CONFIGS: geniatech_tin_sdio geniatech_vanadium_sdio rpi_pi5_tin_sdio rpi_pi5_vanadium_sdio rzg3s_tin_sdio rzg3s_vanadium_sdio
+    TIN_BUILDS: geniatech_tin_sdio rpi_pi5_tin_sdio rzg3s_tin_sdio
+    VANADIUM_BUILDS: geniatech_vanadium_sdio rpi_pi5_vanadium_sdio rzg3s_vanadium_sdio
+    REVISIONS: "ba"
+    TMP_DIR: tmp_artifacts
+    RELEASE_EMAIL_RECIPIENTS: !reference [.vars, variables, CONN_EMAIL_RECIPIENTS]
+    QA_EMAIL_RECIPIENTS: !reference [.vars, variables, QA_EMAIL_RECIPIENTS]
+    KERNEL_VERSION_PATH: "/home/developer/work/rzg_vlp/build/tmp/work/smarc_rzg2l-poky-linux/linux-renesas/"
+    POKY_VERSION_PATH: "/opt/poky/"
+    BUILD_INFO_FILE: "build.info"
+    RELEASE_NOTES_ARTIFACTORY_URL: https://artifactory.global.renesas.com/artifactory/public-fsp-rrq-release-notes
+    RF_TOOL_PATH: "TOOLS/rf/"
+  needs:
+    - job: Build
+      artifacts: true
+  before_script:
+    - sudo chown -R 1000 .
+    - sudo apt update
+    - sudo apt -y install ssmtp mailutils gettext-base git curl
+    - !reference [.prepeare_email_notification, configure_email_server]
+    - |
+      set -e
+
+      setup_ssh_config() {
+        echo "Host *" > ~/.ssh/config
+        echo "  ServerAliveInterval 5" >> ~/.ssh/config
+        echo "  ServerAliveCountMax 2" >> ~/.ssh/config
+        echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+        echo "  Compression yes" >> ~/.ssh/config
+        echo "  ForwardAgent yes" >> ~/.ssh/config
+      }
+
+      setup_deploy_key() {
+        echo "Setting up deploy key ..."
+        mkdir -p ~/.ssh
+        echo "$RSWLAN_DEPLOY_KEY" > ~/.ssh/deploy_key
+        chmod 0600 ~/.ssh/deploy_key
+        ssh-keyscan $CI_SERVER_HOST >> ~/.ssh/known_hosts
+        setup_ssh_config
+      }
+
+      setup_git_config() {
+        echo "Setting up git configuration ..."
+        git config --global http.sslVerify false || true
+        git config --global pull.ff only || true
+        git config --global --replace-all user.email "ci-agent@renesas.com" || true
+        git config --global --replace-all user.name "ci-agent" || true
+        git config --add --local core.sshCommand 'ssh -i ~/.ssh/deploy_key'
+        git remote rm origin || true
+        git remote add origin ssh://git@$CI_SERVER_HOST:2222/$CI_PROJECT_PATH.git || true
+        git fetch origin $CI_DEFAULT_BRANCH
+      }
+
+      setup_deploy_key
+      setup_git_config
+  script:
+    - |
+      set -e
+      export DATE=$(date +%Y-%m-%d)
+      TAG=""
+
+      # GIT_TAG_AUTHOR stores tagger e-mail"
+      export GIT_TAG_AUTHOR=$(git show $CI_COMMIT_TAG | grep '^Tagger:' | grep -oP '(?<=\<).*?(?=\>)')
+      echo "Tag author: $GIT_TAG_AUTHOR"
+
+      generate_tag() {
+        if [[ ${SCHEDULE} == "NIGHTLY" ]]; then
+          TAG="${SCHEDULE}_$DATE"
+          echo "Last nightly tag: $TAG"
+        fi
+      }
+
+      create_and_push_tag() {
+        git tag -a "$TAG" -m "Build for: $TAG" || true
+        git push origin tag "$TAG" || true
+        echo "Git Tag: $TAG created successfully"
+      }
+
+      upload_artifacts() {
+        build_configs=$1
+        artifactory_path=$2
+        export UPLOAD_ARTIFACTORY_URL="${ARTIFACTORY_URL}/artifactory/${ARTIFACTORY_PROJECT}/${artifactory_path}"
+        for BUILD_CONFIG in ${build_configs}; do
+          build_url=$(echo ${BUILD_CONFIG} | tr _ /)
+          echo "[CHECK] Artifascts for ${BUILD_CONFIG} build:"
+          for REVISION in ${REVISIONS}; do
+            cp ./${BUILD_INFO_FILE} ${BUILD_CONFIG}_artifacts/${REVISION}/${BUILD_INFO_FILE}
+          done
+          ls -Rla ${BUILD_CONFIG}_artifacts
+          find ${BUILD_CONFIG}_artifacts -type f -name "*" | while read file; do
+            file_path=${file#"${BUILD_CONFIG}_artifacts/"}
+            echo "Uploading ${file_path}."
+            curl -L -u ${ARTIFACTORY_USER}:${ARTIFACTORY_KEY} -T "$file" "${UPLOAD_ARTIFACTORY_URL}/${build_url}/${file_path}" || true
+          done
+        done
+      }
+
+      generate_build_info() {
+        echo "Kernel version: $(ls ${KERNEL_VERSION_PATH})" > ./${BUILD_INFO_FILE}
+        echo "Poky version: $(ls ${POKY_VERSION_PATH})" >> ./${BUILD_INFO_FILE}
+      }
+
+      prepare_release_notes() {
+        set +e
+        if [[ ${CI_COMMIT_TAG} =~ v6. ]]; then
+          url="${RELEASE_NOTES_ARTIFACTORY_URL}/6.1.x/${CI_COMMIT_TAG:1}/RRQ61000_SWQA_test_release_note_${CI_COMMIT_TAG}.pdf"
+          download_result=$(wget ${url})
+          if [[ $? -ne 0 ]]; then
+            export RELEASE_NOTES_FILE="Not found"
+          else
+            export RELEASE_NOTES_URL=${url}
+            export RELEASE_NOTES_FILE=RRQ61000_SWQA_test_release_note_${CI_COMMIT_TAG}.pdf
+          fi
+        elif [[ ${CI_COMMIT_TAG} =~ v7. ]]; then
+          url="${RELEASE_NOTES_ARTIFACTORY_URL}/7.1.x/${CI_COMMIT_TAG:1}/RRQ61400_SWQA_test_release_note_${CI_COMMIT_TAG}.pdf"
+          download_result=$(wget -q ${url})
+          if [[ $? -ne 0 ]]; then
+            export RELEASE_NOTES_URL=""
+            export RELEASE_NOTES_FILE="Not found"
+          else
+            export RELEASE_NOTES_URL=${url}
+            export RELEASE_NOTES_FILE=RRQ61400_SWQA_test_release_note_${CI_COMMIT_TAG}.pdf
+          fi
+        fi
+        set -e
+      }
+
+      generate_build_info
+
+      if [[ ${CI_PIPELINE_SOURCE} == "schedule" ]]; then
+        generate_tag
+        if [[ "$TAG" != "" ]]; then
+          create_and_push_tag
+        fi
+        ARTIFACTORY_PATH="${SCHEDULE}/$DATE/LINUX_${SCHEDULE}_$DATE"
+        upload_artifacts "${BUILD_CONFIGS}" "${ARTIFACTORY_PATH}"
+      fi
+
+      #if [[ $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && -z $CI_COMMIT_TAG ]]; then
+      if [[ $CI_PIPELINE_SOURCE == "push" && -z $CI_COMMIT_TAG ]]; then
+        commit_branch=$(echo ${CI_COMMIT_BRANCH} | tr / -)
+        ARTIFACTORY_PATH="COMMITS/RSWLAN/${commit_branch}/${DATE}/${CI_COMMIT_SHORT_SHA}"
+        echo "Uploading artifacts for commit: $CI_COMMIT_SHORT_SHA to the path: $upl_artifact"
+        upload_artifacts "${BUILD_CONFIGS}" "${ARTIFACTORY_PATH}"
+      fi
+
+      if [[ ${CI_COMMIT_TAG} =~ ^v[67]\.[01]\.[1-9]\.[0-9]{0,2}\.[0-9]{0,3}(_.*|)$ ]]; then
+        echo "Release tag: ${CI_COMMIT_TAG}"
+        IFS='.' read -r prefix mode release branch revision <<< "${CI_COMMIT_TAG}"
+        ARTIFACTORY_PATH="RELEASE/$prefix.$mode.x/${CI_COMMIT_TAG}/"
+        RELEASE_EMAIL_RECIPIENTS+=" $GIT_TAG_AUTHOR $QA_EMAIL_RECIPIENTS"
+        prepare_release_notes
+        export ARTIFACTORY_RF_TOOL_URL="${ARTIFACTORY_URL}/artifactory/${ARTIFACTORY_PROJECT}/${RF_TOOL_PATH}"
+        if [[ ${CI_COMMIT_TAG} =~ v6 ]]; then
+          upload_artifacts "${TIN_BUILDS}" "${ARTIFACTORY_PATH}"
+        elif [[ ${CI_COMMIT_TAG} =~ v7 ]]; then
+          upload_artifacts "${VANADIUM_BUILDS}" "${ARTIFACTORY_PATH}"
+        fi
+        python3 ci/tools/send_email.py --type "release" --recipients "$RELEASE_EMAIL_RECIPIENTS"
+      fi
