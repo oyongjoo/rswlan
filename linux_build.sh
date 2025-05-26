@@ -135,7 +135,7 @@ veryfy_board() {
 
         "rpi_pi5")
             export ENV_SETUP_PATH=/opt/rpi/env_toolchain_rpi_aarch64
-            export KDIR=/home/developer/work/raspberrypi5
+            export KDIR=/home/pi/work/raspberrypi5   # Changed from /home/developer/work/raspberrypi5
             BOARD_IS_VALID=$TRUE
             ;;
 
