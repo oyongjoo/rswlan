@@ -87,3 +87,37 @@ cd ~/work/rswfmac/rswlan
 2. Ensure proper kernel configuration
 3. Verify symbol availability
 4. Keep build environment consistent
+
+### Code Style Guidelines
+
+#### Error Handling
+1. **Early Return Pattern**
+   - Prefer early returns for error conditions
+   - Avoid deeply nested if-statements
+   - Example:
+   ```c
+   static rs_ret function_name(struct some_struct *param)
+   {
+       rs_ret ret;
+       
+       ret = first_operation();
+       if (ret != RS_SUCCESS)
+           return ret;
+           
+       ret = second_operation();
+       if (ret != RS_SUCCESS)
+           return ret;
+           
+       return RS_SUCCESS;
+   }
+   ```
+
+2. **Error Propagation**
+   - Return error codes immediately when detected
+   - Preserve original error codes when possible
+   - Avoid masking errors with generic failure codes
+
+3. **Resource Cleanup**
+   - Use early returns only after proper cleanup
+   - Consider using goto for complex cleanup scenarios
+   - Keep cleanup code paths clear and well-documented

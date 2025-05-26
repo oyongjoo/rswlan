@@ -44,46 +44,49 @@ struct rs_c_dbg_stat_t rs_c_dbg_stat = {
 
 static rs_ret core_init(struct rs_c_if *c_if)
 {
-	rs_ret ret = RS_FAIL;
+	rs_ret ret;
 
 	RS_TRACE(RS_FN_ENTRY_STR);
 
 	c_if->core->wq = rs_k_calloc(sizeof(struct rs_k_workqueue));
-	if (c_if->core->wq) {
-		ret = rs_k_workqueue_create(c_if->core->wq);
-	}
+	if (!c_if->core->wq)
+		return RS_FAIL;
 
-	if (ret == RS_SUCCESS) {
-		ret = rs_c_ctrl_init(c_if);
-	}
+	ret = rs_k_workqueue_create(c_if->core->wq);
+	if (ret != RS_SUCCESS)
+		return ret;
 
-	if (ret == RS_SUCCESS) {
-		ret = rs_c_recovery_init(c_if);
-	}
+	ret = rs_c_ctrl_init(c_if);
+	if (ret != RS_SUCCESS)
+		return ret;
 
-	if (ret == RS_SUCCESS) {
-		ret = rs_c_indi_init(c_if, RS_NET_INID_BUF_Q_MAX);
-	}
+	ret = rs_c_recovery_init(c_if);
+	if (ret != RS_SUCCESS)
+		return ret;
 
-	if (ret == RS_SUCCESS) {
-		ret = rs_c_rx_data_init(c_if, RS_NET_RX_BUF_Q_MAX);
-	}
+	ret = rs_c_indi_init(c_if, RS_NET_INID_BUF_Q_MAX);
+	if (ret != RS_SUCCESS)
+		return ret;
 
-	if (ret == RS_SUCCESS) {
-		ret = rs_c_rx_init(c_if);
-	}
+	ret = rs_c_rx_data_init(c_if, RS_NET_RX_BUF_Q_MAX);
+	if (ret != RS_SUCCESS)
+		return ret;
 
-	if (ret == RS_SUCCESS) {
-		ret = rs_c_tx_init(c_if, RS_NET_TX_BUF_Q_MAX, RS_NET_TX_POWER_BUF_Q_MAX);
-	}
+	ret = rs_c_rx_init(c_if);
+	if (ret != RS_SUCCESS)
+		return ret;
 
-	if (ret == RS_SUCCESS) {
-		ret = rs_c_status_init(c_if, RS_CORE_STATUS_SIZE);
-	}
+	ret = rs_c_tx_init(c_if, RS_NET_TX_BUF_Q_MAX, RS_NET_TX_POWER_BUF_Q_MAX);
+	if (ret != RS_SUCCESS)
+		return ret;
 
-	if (ret == RS_SUCCESS) {
-		ret = rs_net_init(c_if);
-	}
+	ret = rs_c_status_init(c_if, RS_CORE_STATUS_SIZE);
+	if (ret != RS_SUCCESS)
+		return ret;
+
+	ret = rs_net_init(c_if);
+	if (ret != RS_SUCCESS)
+		return ret;
 
 	c_if->core->scan = 0;
 
