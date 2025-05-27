@@ -22,10 +22,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// MACRO DEFINITION
 
-#define C_INDI_SPIN_INIT(c_if)    (void)rs_k_spinlock_create(&c_if->core->indi.lock)
-#define C_INDI_SPIN_DEINIT(c_if) (void)rs_k_spinlock_destroy(&c_if->core->indi.lock)
-#define C_INDI_SPIN_LOCK(c_if)   (void)rs_k_spinlock_lock(&c_if->core->indi.lock)
-#define C_INDI_SPIN_UNLOCK(c_if) (void)rs_k_spinlock_unlock(&c_if->core->indi.lock)
+#define C_INDI_SPIN_INIT(c_if)    (void)rs_k_spin_lock_create(&c_if->core->indi.lock)
+#define C_INDI_SPIN_DEINIT(c_if) (void)rs_k_spin_lock_destroy(&c_if->core->indi.lock)
+#define C_INDI_SPIN_LOCK(c_if)   (void)rs_k_spin_lock(&c_if->core->indi.lock)
+#define C_INDI_SPIN_UNLOCK(c_if) (void)rs_k_spin_unlock(&c_if->core->indi.lock)
 
 #define C_IF_INDI_ADDR          (0)
 #define C_INDI_THREAD_NAME      "RSW_INDI_THREAD"
@@ -79,7 +79,7 @@ static rs_ret c_indi_pop(struct rs_c_if *c_if, struct rs_c_indi **indi_data)
 	s32 used_idx = RS_FAIL;
 
 	if (c_if && c_if->core && indi_data) {
-		C_INDI_MUTEX_LOCK(c_if);
+		C_INDI_SPIN_LOCK(c_if);
 
 		used_idx = rs_c_q_pop(&c_if->core->indi.buf_q);
 
@@ -94,7 +94,7 @@ static rs_ret c_indi_pop(struct rs_c_if *c_if, struct rs_c_indi **indi_data)
 			}
 		}
 
-		C_INDI_MUTEX_UNLOCK(c_if);
+		C_INDI_SPIN_UNLOCK(c_if);
 	}
 
 	if (used_idx >= 0) {
