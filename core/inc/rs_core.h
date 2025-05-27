@@ -66,7 +66,7 @@ struct rs_core {
 #else
 		struct rs_k_work work;
 #endif
-		struct rs_k_mutex mutex;
+		struct rs_k_spin_lock lock;
 
 		struct rs_q buf_q;
 		struct rs_c_indi **buf;
