@@ -180,3 +180,58 @@ if (ret != RS_SUCCESS) {
 - Keep README.md current
 - Document architectural decisions
 - Include examples where helpful
+
+### Synchronization Mechanisms
+
+#### When to Use Spinlock
+Use spinlocks in the following scenarios:
+- Very short critical sections (e.g., queue operations)
+- When the code might run in interrupt context
+- When sleep is not allowed
+- When minimal latency is crucial
+
+Examples in our codebase:
+1. **Indication Buffer (`indi`)**
+   - Queue manipulation
+   - Buffer management
+   - Quick interrupt handling
+
+2. **RX/TX Data Buffers (`rx_data`, `tx_data`)**
+   - Buffer queue operations
+   - Fast data path operations
+   - Interrupt context compatibility
+
+#### When to Use Mutex
+Use mutexes in the following scenarios:
+- Longer critical sections
+- When the code will never run in interrupt context
+- When sleep is allowed
+- When the protected operation might take a while
+
+Examples in our codebase:
+1. **Status Management (`status`)**
+   - Complex state changes
+   - Configuration updates
+   - Non-time-critical operations
+
+2. **Control Operations (`ctrl`)**
+   - Command processing
+   - Response handling
+   - Complex operations that might sleep
+
+#### Code Examples
+```c
+// Spinlock example (for short, atomic operations)
+struct {
+    struct rs_k_spin_lock lock;
+    struct rs_q buf_q;
+    // ...
+} rx_data;
+
+// Mutex example (for operations that might sleep)
+struct {
+    struct rs_k_mutex mutex;
+    u8 *value;
+    // ...
+} status;
+```
