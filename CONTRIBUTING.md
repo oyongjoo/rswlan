@@ -102,6 +102,38 @@ static rs_ret function_name(struct some_struct *param)
 - Protect shared data consistently
 - Consider lock-free alternatives
 
+### 6. Error Management
+
+#### Error Logging
+- Log all error conditions with meaningful messages
+- Include error codes in log messages for debugging
+- Use appropriate log levels (ERR, WARN, INFO, DEBUG)
+- Example:
+```c
+if (ret != RS_SUCCESS) {
+    RS_ERR("Failed to initialize module, ret=%d", ret);
+    return ret;
+}
+```
+
+#### Log Message Guidelines
+1. **Error Context**
+   - Include the operation that failed
+   - Add relevant parameter values
+   - Include error codes or status
+
+2. **Log Levels**
+   - RS_ERR: For errors that prevent normal operation
+   - RS_WARN: For recoverable issues
+   - RS_INFO: For important state changes
+   - RS_DEBUG: For detailed debugging information
+
+3. **Message Format**
+   - Start with an action verb (Failed, Unable, Cannot, etc.)
+   - Include the component or module name
+   - Add error code or status when available
+   - Keep messages clear and concise
+
 ## Git Commit Guidelines
 
 ### 1. Commit Messages

@@ -49,44 +49,64 @@ static rs_ret core_init(struct rs_c_if *c_if)
 	RS_TRACE(RS_FN_ENTRY_STR);
 
 	c_if->core->wq = rs_k_calloc(sizeof(struct rs_k_workqueue));
-	if (!c_if->core->wq)
+	if (!c_if->core->wq) {
+		RS_ERR("Failed to allocate workqueue");
 		return RS_FAIL;
+	}
 
 	ret = rs_k_workqueue_create(c_if->core->wq);
-	if (ret != RS_SUCCESS)
+	if (ret != RS_SUCCESS) {
+		RS_ERR("Failed to create workqueue, ret=%d", ret);
 		return ret;
+	}
 
 	ret = rs_c_ctrl_init(c_if);
-	if (ret != RS_SUCCESS)
+	if (ret != RS_SUCCESS) {
+		RS_ERR("Failed to initialize control module, ret=%d", ret);
 		return ret;
+	}
 
 	ret = rs_c_recovery_init(c_if);
-	if (ret != RS_SUCCESS)
+	if (ret != RS_SUCCESS) {
+		RS_ERR("Failed to initialize recovery module, ret=%d", ret);
 		return ret;
+	}
 
 	ret = rs_c_indi_init(c_if, RS_NET_INID_BUF_Q_MAX);
-	if (ret != RS_SUCCESS)
+	if (ret != RS_SUCCESS) {
+		RS_ERR("Failed to initialize indication module, ret=%d", ret);
 		return ret;
+	}
 
 	ret = rs_c_rx_data_init(c_if, RS_NET_RX_BUF_Q_MAX);
-	if (ret != RS_SUCCESS)
+	if (ret != RS_SUCCESS) {
+		RS_ERR("Failed to initialize RX data module, ret=%d", ret);
 		return ret;
+	}
 
 	ret = rs_c_rx_init(c_if);
-	if (ret != RS_SUCCESS)
+	if (ret != RS_SUCCESS) {
+		RS_ERR("Failed to initialize RX module, ret=%d", ret);
 		return ret;
+	}
 
 	ret = rs_c_tx_init(c_if, RS_NET_TX_BUF_Q_MAX, RS_NET_TX_POWER_BUF_Q_MAX);
-	if (ret != RS_SUCCESS)
+	if (ret != RS_SUCCESS) {
+		RS_ERR("Failed to initialize TX module, ret=%d", ret);
 		return ret;
+	}
 
 	ret = rs_c_status_init(c_if, RS_CORE_STATUS_SIZE);
-	if (ret != RS_SUCCESS)
+	if (ret != RS_SUCCESS) {
+		RS_ERR("Failed to initialize status module, ret=%d", ret);
 		return ret;
+	}
 
 	ret = rs_net_init(c_if);
-	if (ret != RS_SUCCESS)
+	if (ret != RS_SUCCESS) {
+		RS_ERR("Failed to initialize network module, ret=%d", ret);
 		return ret;
+	}
 
 	c_if->core->scan = 0;
 
