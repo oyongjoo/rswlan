@@ -90,11 +90,24 @@ static rs_ret function_name(struct some_struct *param)
 
 ### 5. Concurrency
 
-#### Locking
-- Document lock ordering rules
-- Keep critical sections small
-- Avoid nested locks when possible
-- Use appropriate lock types
+#### Locking Mechanisms
+1. **Spinlock Usage**
+   - Use for very short critical sections
+   - Appropriate for interrupt context
+   - When wait time is expected to be minimal
+   - Example cases:
+     * Queue operations
+     * Short buffer manipulations
+     * Fast hardware register access
+
+2. **Mutex Usage**
+   - Use for longer critical sections
+   - When sleep is allowed
+   - When contention is expected
+   - Example cases:
+     * File operations
+     * Complex data structure updates
+     * Network operations
 
 #### Shared Resources
 - Clearly document ownership rules

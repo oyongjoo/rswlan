@@ -22,13 +22,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// MACRO DEFINITION
 
-#define C_INDI_MUTEX_INIT(c_if)	  (void)rs_k_mutex_create(&c_if->core->indi.mutex)
-#define C_INDI_MUTEX_DEINIT(c_if) (void)rs_k_mutex_destroy(&c_if->core->indi.mutex)
-#define C_INDI_MUTEX_LOCK(c_if)	  (void)rs_k_mutex_lock(&c_if->core->indi.mutex)
-#define C_INDI_MUTEX_UNLOCK(c_if) (void)rs_k_mutex_unlock(&c_if->core->indi.mutex)
+#define C_INDI_SPIN_INIT(c_if)    (void)rs_k_spinlock_create(&c_if->core->indi.lock)
+#define C_INDI_SPIN_DEINIT(c_if) (void)rs_k_spinlock_destroy(&c_if->core->indi.lock)
+#define C_INDI_SPIN_LOCK(c_if)   (void)rs_k_spinlock_lock(&c_if->core->indi.lock)
+#define C_INDI_SPIN_UNLOCK(c_if) (void)rs_k_spinlock_unlock(&c_if->core->indi.lock)
 
-#define C_IF_INDI_ADDR		  (0)
-#define C_INDI_THREAD_NAME	  "RSW_INDI_THREAD"
+#define C_IF_INDI_ADDR          (0)
+#define C_INDI_THREAD_NAME      "RSW_INDI_THREAD"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// TYPE DEFINITION
@@ -45,7 +45,7 @@ static rs_ret c_indi_push(struct rs_c_if *c_if, struct rs_c_indi *indi_data)
 	s32 free_idx = RS_FAIL;
 
 	if (c_if && c_if->core && indi_data) {
-		C_INDI_MUTEX_LOCK(c_if);
+		C_INDI_SPIN_LOCK(c_if);
 
 		free_idx = rs_c_q_push(&c_if->core->indi.buf_q);
 
@@ -61,7 +61,7 @@ static rs_ret c_indi_push(struct rs_c_if *c_if, struct rs_c_indi *indi_data)
 			RS_ERR("indi full[%d]\n", free_idx);
 		}
 
-		C_INDI_MUTEX_UNLOCK(c_if);
+		C_INDI_SPIN_UNLOCK(c_if);
 	}
 
 	if (free_idx >= 0) {
@@ -189,7 +189,7 @@ rs_ret rs_c_indi_init(struct rs_c_if *c_if, u16 indi_buf_num)
 	RS_TRACE(RS_FN_ENTRY_STR);
 
 	if (c_if && c_if->core && indi_buf_num > 0) {
-		C_INDI_MUTEX_INIT(c_if);
+		C_INDI_SPIN_INIT(c_if);
 
 		c_if->core->indi.buf =
 			(struct rs_c_indi **)rs_k_calloc(indi_buf_num * sizeof(struct rs_c_indi));
@@ -245,7 +245,7 @@ rs_ret rs_c_indi_deinit(struct rs_c_if *c_if)
 			c_if->core->indi.buf_num = 0;
 		}
 
-		C_INDI_MUTEX_DEINIT(c_if);
+		C_INDI_SPIN_DEINIT(c_if);
 	}
 
 	return ret;
